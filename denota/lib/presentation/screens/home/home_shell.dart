@@ -1,15 +1,35 @@
+// lib/presentation/screens/home/home_shell.dart
+//
+// Shell principal de l'application.
+// Route l'utilisateur vers l'écran d'accueil correspondant à son rôle.
+//
+// Navigation par rôle :
+//   - athlete     → TalentHomeScreen
+//   - recruiter   → ScoutHomeScreen
+//   - institution → InstitutionDashboardScreen
+//   - federation  → FederationDashboardScreen
+//   - admin       → AdminDashboardScreen
+//   - sponsor     → ScoutHomeScreen (fallback)
+//   - expert      → ScoutHomeScreen (fallback)
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../main.dart';
 import 'tiktok_feed_screen.dart';
+import 'notifications_screen.dart';
 import '../search/discover_screen.dart';
 import '../messaging/conversations_screen.dart';
-import '../home/notifications_screen.dart';
 import '../profile/profile_screen.dart';
-import '../recruiter/recruiter_dashboard_screen.dart';
+//import '../recruiter/recruiter_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../auth/account_status_screen.dart';
+
+// Nouveaux écrans DeNoTa
+import '../talent/talent_home_screen.dart';
+import '../scout/scout_home_screen.dart';
+import '../institution/institution_dashboard_screen.dart';
+import '../federation/federation_dashboard_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -30,6 +50,7 @@ class _HomeShellState extends State<HomeShell> {
     _loadRole();
   }
 
+  // ── Chargement du rôle et du statut ─────────────────────
   Future<void> _loadRole() async {
     final uid = supabase.auth.currentUser?.id;
     if (uid != null) {
@@ -52,62 +73,133 @@ class _HomeShellState extends State<HomeShell> {
     if (mounted) setState(() => _roleLoaded = true);
   }
 
-  List<Widget> get _screens {
+  // ── Écran d'accueil selon le rôle ────────────────────────
+  Widget _getHomeScreen() {
     switch (_role) {
       case 'recruiter':
-        return const [
-          RecruiterDashboardScreen(),
-          DiscoverScreen(),
-          ConversationsScreen(),
-          NotificationsScreen(),
-          ProfileScreen(),
-        ];
+        return const ScoutHomeScreen();
+      case 'institution':
+        return const InstitutionDashboardScreen();
+      case 'federation':
+        return const FederationDashboardScreen();
       case 'admin':
-        return const [
-          AdminDashboardScreen(),
-          DiscoverScreen(),
-          ConversationsScreen(),
-          NotificationsScreen(),
-          ProfileScreen(),
-        ];
-      default: // athlete, institution, sponsor, expert
-        return [
-          TikTokFeedScreen(isActive: _currentIndex == 0),
-          const DiscoverScreen(),
-          const ConversationsScreen(),
-          const NotificationsScreen(),
-          const ProfileScreen(),
-        ];
+        return const AdminDashboardScreen();
+      case 'sponsor':
+      case 'expert':
+        // Fallback : sponsor et expert utilisent le dashboard scout
+        return const ScoutHomeScreen();
+      case 'athlete':
+      default:
+        return const TalentHomeScreen();
     }
   }
 
-  List<NavigationDestination> get _destinations {
-    final homeLabel = _role == 'recruiter'
-        ? 'Dashboard'
-        : _role == 'admin'
-            ? 'Admin'
-            : 'Accueil';
-    final homeIcon = _role == 'recruiter'
-        ? Icons.dashboard_outlined
-        : _role == 'admin'
-            ? Icons.admin_panel_settings_outlined
-            : Icons.home_outlined;
-    final homeSelectedIcon = _role == 'recruiter'
-        ? Icons.dashboard
-        : _role == 'admin'
-            ? Icons.admin_panel_settings
-            : Icons.home;
+  // ── Écran "Découvrir" selon le rôle ─────────────────────
+  Widget _getDiscoverScreen() {
+    // Pour les athlètes : TikTokFeed (contenu social)
+    // Pour les autres : DiscoverScreen (recherche de talents)
+    if (_role == 'athlete') {
+      return TikTokFeedScreen(isActive: _currentIndex == 1);
+    }
+    return const DiscoverScreen();
+  }
 
+  // ── Label et icône du 1er onglet selon le rôle ──────────
+  String get _homeLabel {
+    switch (_role) {
+      case 'recruiter':
+        return 'Dashboard';
+      case 'institution':
+        return 'Club';
+      case 'federation':
+        return 'Fédé';
+      case 'admin':
+        return 'Admin';
+      case 'sponsor':
+      case 'expert':
+        return 'Dashboard';
+      case 'athlete':
+      default:
+        return 'Accueil';
+    }
+  }
+
+  IconData get _homeIcon {
+    switch (_role) {
+      case 'recruiter':
+        return Icons.dashboard_outlined;
+      case 'institution':
+        return Icons.business_outlined;
+      case 'federation':
+        return Icons.account_balance_outlined;
+      case 'admin':
+        return Icons.admin_panel_settings_outlined;
+      case 'sponsor':
+      case 'expert':
+        return Icons.dashboard_outlined;
+      case 'athlete':
+      default:
+        return Icons.home_outlined;
+    }
+  }
+
+  IconData get _homeSelectedIcon {
+    switch (_role) {
+      case 'recruiter':
+        return Icons.dashboard;
+      case 'institution':
+        return Icons.business;
+      case 'federation':
+        return Icons.account_balance;
+      case 'admin':
+        return Icons.admin_panel_settings;
+      case 'sponsor':
+      case 'expert':
+        return Icons.dashboard;
+      case 'athlete':
+      default:
+        return Icons.home;
+    }
+  }
+
+  // ── Label et icône du 2e onglet selon le rôle ──────────
+  String get _discoverLabel {
+    return _role == 'athlete' ? 'Découvrir' : 'Talents';
+  }
+
+  IconData get _discoverIcon {
+    return _role == 'athlete'
+        ? Icons.explore_outlined
+        : Icons.search_outlined;
+  }
+
+  IconData get _discoverSelectedIcon {
+    return _role == 'athlete' ? Icons.explore : Icons.search;
+  }
+
+  // ── Liste des écrans (5 onglets) ─────────────────────────
+  List<Widget> get _screens {
+    return [
+      _getHomeScreen(),
+      _getDiscoverScreen(),
+      const ConversationsScreen(),
+      const NotificationsScreen(),
+      const ProfileScreen(),
+    ];
+  }
+
+  // ── Destinations de la barre de navigation ──────────────
+  List<NavigationDestination> get _destinations {
     return [
       NavigationDestination(
-        icon: Icon(homeIcon),
-        selectedIcon: Icon(homeSelectedIcon, color: AppColors.primary),
-        label: homeLabel,
+        icon: Icon(_homeIcon),
+        selectedIcon: Icon(_homeSelectedIcon, color: AppColors.primary),
+        label: _homeLabel,
       ),
-      const NavigationDestination(
-        icon: Icon(Icons.search_outlined),
-        selectedIcon: Icon(Icons.search, color: AppColors.primary),
-        label: 'Découvrir',
+      NavigationDestination(
+        icon: Icon(_discoverIcon),
+        selectedIcon: Icon(_discoverSelectedIcon, color: AppColors.primary),
+        label: _discoverLabel,
       ),
       const NavigationDestination(
         icon: Icon(Icons.chat_bubble_outline),
@@ -127,16 +219,19 @@ class _HomeShellState extends State<HomeShell> {
     ];
   }
 
+  // ── Build ───────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // Chargement initial
     if (!_roleLoaded) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
-    // Compte non validé / bloqué : on n'affiche pas l'app, mais un écran
-    // d'attente ou de blocage (avec possibilité de re-vérifier / déconnexion).
+    // Compte non validé / bloqué
     if (_status != 'active') {
       return AccountStatusScreen(
         status: _status,
@@ -147,6 +242,7 @@ class _HomeShellState extends State<HomeShell> {
       );
     }
 
+    // Interface principale
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
