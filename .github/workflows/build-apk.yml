@@ -1,0 +1,91 @@
+name: Build Android APK
+
+# ── Quand déclencher le build ──────────────────────────
+on:
+  # À chaque push sur main (uniquement si le code denota/ change)
+  push:
+    branches: [ main ]
+    paths:
+      - 'denota/**'
+      - '.github/workflows/build-apk.yml'
+
+  # Manuellement depuis GitHub (onglet Actions → Run workflow)
+  workflow_dispatch:
+
+  # Sur les Pull Requests
+  pull_request:
+    branches: [ main ]
+
+# ── Jobs ───────────────────────────────────────────────
+jobs:
+  build-apk:
+    name: Build APK Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Récupérer le code ─────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Installer Java 17 (requis pour Android) ──
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # ── 3. Installer Flutter ────────────────────────
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.2'
+          channel: 'stable'
+          cache: true
+
+      # ── 4. Créer le .env depuis les secrets GitHub ──
+      - name: Create .env file
+        working-directory: denota
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+          echo "✅ Fichier .env créé"
+          echo "URL: ${SUPABASE_URL:0:30}..."
+          echo "KEY: ${SUPABASE_ANON_KEY:0:20}..."
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+      # ── 5. Récupérer les dépendances Flutter ────────
+      - name: Install Flutter dependencies
+        working-directory: denota
+        run: flutter pub get
+
+      # ── 6. Analyse statique (warning seulement) ─────
+      - name: Analyze Flutter code
+        working-directory: denota
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
+
+      # ── 7. Build APK Release ────────────────────────
+      - name: Build APK
+        working-directory: denota
+        run: flutter build apk --release --split-per-abi
+
+      # ── 8. Upload des APKs ──────────────────────────
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: denota-apk-${{ github.sha }}
+          path: denota/build/app/outputs/flutter-apk/*.apk
+          retention-days: 30
+          if-no-files-found: error
+
+      # ── 9. Résumé dans le job ───────────────────────
+      - name: Build summary
+        run: |
+          echo "## ✅ Build APK réussi !" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Fichiers générés :**" >> $GITHUB_STEP_SUMMARY
+          ls -lh denota/build/app/outputs/flutter-apk/*.apk | awk '{print "- `" $9 "` (" $5 ")"}' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Téléchargez depuis l'onglet Artifacts de ce workflow.**" >> $GITHUB_STEP_SUMMARY
