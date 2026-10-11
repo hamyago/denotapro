@@ -1,0 +1,12 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  errors:
+    deprecated_member_use: ignore
+  exclude:
+    - build/**
+    - ios/**
+
+linter:
+  rules:
+    prefer_single_quotes: true

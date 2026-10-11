@@ -1,0 +1,80 @@
+# DeNoTa CI — Détection de Nouveaux Talents
+## Application Flutter complète — Côte d'Ivoire
+
+---
+
+## 🚀 Installation
+
+### 1. Cloner le repo
+```bash
+git clone https://github.com/hamyago/denota-ci.git
+cd denota-ci
+```
+
+### 2. Configurer l'environnement
+```bash
+cp .env.example .env
+# Remplir .env avec tes clés Supabase
+```
+
+### 3. Ajouter les fonts Poppins
+```bash
+mkdir -p assets/fonts
+# Télécharger depuis Google Fonts et placer dans assets/fonts/
+# Poppins-Regular.ttf, Poppins-Medium.ttf, Poppins-SemiBold.ttf
+# Poppins-Bold.ttf, Poppins-Light.ttf
+```
+
+### 4. Lancer
+```bash
+flutter pub get
+flutter run
+```
+
+---
+
+## 🔧 GitHub Actions (Build automatique)
+
+### Secrets requis dans GitHub → Settings → Secrets
+| Secret | Description |
+|---|---|
+| `SUPABASE_URL` | URL de ton projet Supabase |
+| `SUPABASE_ANON_KEY` | Clé anon Supabase |
+| `GOOGLE_SERVICES_JSON` | Contenu du google-services.json |
+
+### Versions utilisées
+| Outil | Version |
+|---|---|
+| Flutter | 3.24.0 |
+| Dart SDK | >=3.3.0 |
+| AGP | 8.3.0 |
+| Gradle | 8.6 |
+| Kotlin | 1.9.23 |
+| Java | 17 |
+| compileSdk | 34 |
+| minSdk | 21 |
+
+---
+
+## 📱 Fonctionnalités
+
+- ✅ Auth (Splash, Onboarding, Login, Register, OTP)
+- ✅ Profil athlète avec Talent Score™
+- ✅ Upload vidéo et publications
+- ✅ Dashboard recruteur + PDF scouting
+- ✅ Recherche avancée avec filtres
+- ✅ Messagerie Premium (Supabase Realtime)
+- ✅ Paiement Wave / CinetPay / Orange Money
+- ✅ Site vitrine HTML (`web_vitrine/index.html`)
+- ✅ Base de données Supabase (5 migrations SQL)
+
+---
+
+## 🗄️ Supabase — Migrations
+
+Exécuter dans l'ordre dans **Supabase → SQL Editor** :
+1. `supabase/migrations/001_core_tables.sql`
+2. `supabase/migrations/002_content_messaging.sql`
+3. `supabase/migrations/003_rls_policies.sql`
+4. `supabase/migrations/004_functions_triggers.sql`
+5. `supabase/migrations/005_storage_seed.sql`
