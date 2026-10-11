@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile_model.dart';
+import '../../core/constants/sports.dart';
 
 /// Extension → type MIME accepté par les buckets avatars/banners
 /// (image/jpeg et non image/jpg, sinon l'upload est refusé).
@@ -241,11 +242,13 @@ class ProfileRepository {
 
   // ── Sports & Positions ─────────────────────────────────
 
+  /// Charge uniquement les 4 sports pilotes de la Phase 1.
+  /// Utilise `kPilotSportIds` (source unique de vérité dans sports.dart).
   Future<List<Map<String, dynamic>>> getSports() async {
     final data = await _client
         .from('sports')
         .select('id, name_fr, slug')
-        .eq('is_active', true)
+        .inFilter('id', kPilotSportIds)
         .order('name_fr');
     return (data as List).cast<Map<String, dynamic>>();
   }

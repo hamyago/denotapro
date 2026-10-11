@@ -43,6 +43,124 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // ══════════════════════════════════════════════════════════
+  // MOT DE PASSE OUBLIÉ
+  // ══════════════════════════════════════════════════════════
+
+  Future<void> _showResetPasswordDialog() async {
+    final emailCtrl = TextEditingController(text: _emailCtrl.text.trim());
+    final formKey = GlobalKey<FormState>();
+    bool sending = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.lock_reset, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text('Mot de passe oublié'),
+            ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Saisissez votre email. Nous vous enverrons un lien '
+                  'pour réinitialiser votre mot de passe.',
+                  style: TextStyle(fontSize: 13, color: AppColors.grey600),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) return 'Email requis';
+                    if (!v.contains('@')) return 'Email invalide';
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: sending ? null : () => Navigator.pop(dialogCtx),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: sending
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+                      setDialogState(() => sending = true);
+
+                      try {
+                        await supabase.auth.resetPasswordForEmail(
+                          emailCtrl.text.trim(),
+                          redirectTo: 'denota://reset-password',
+                        );
+
+                        if (!dialogCtx.mounted) return;
+                        Navigator.pop(dialogCtx);
+
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '✅ Email envoyé à ${emailCtrl.text.trim()}. '
+                              'Vérifiez votre boîte de réception.',
+                            ),
+                            backgroundColor: AppColors.success,
+                            duration: const Duration(seconds: 5),
+                          ),
+                        );
+                      } catch (e) {
+                        setDialogState(() => sending = false);
+
+                        if (!dialogCtx.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Erreur : ${e.toString().length > 100 ? e.toString().substring(0, 100) : e.toString()}',
+                            ),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: sending
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Envoyer'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _emailCtrl.dispose();
@@ -107,16 +225,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.errorBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color: AppColors.error.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                        const Icon(Icons.error_outline,
+                            color: AppColors.error, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _error!,
-                            style: const TextStyle(color: AppColors.error, fontSize: 13),
+                            style: const TextStyle(
+                                color: AppColors.error, fontSize: 13),
                           ),
                         ),
                       ],
@@ -152,7 +273,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       labelText: 'Mot de passe',
                       prefixIcon: const Icon(Icons.lock_outlined),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                        icon: Icon(_obscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined),
                         onPressed: () => setState(() => _obscure = !_obscure),
                       ),
                     ),
@@ -169,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {/* TODO: reset password */},
+                    onPressed: _showResetPasswordDialog,
                     child: const Text('Mot de passe oublié ?'),
                   ),
                 ),
@@ -203,7 +326,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const Text(
                           'Pas encore de compte ? ',
-                          style: TextStyle(color: AppColors.grey500, fontSize: 14),
+                          style: TextStyle(
+                              color: AppColors.grey500, fontSize: 14),
                         ),
                         TextButton(
                           onPressed: () => AppNavigator.goToRegister(),

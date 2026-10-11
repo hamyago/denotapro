@@ -1,6 +1,8 @@
 // lib/data/repositories/search_repository.dart
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/constants/sports.dart';
+
 class SearchFilters {
   final int? sportId;
   final int? positionId;
@@ -126,11 +128,13 @@ class SearchRepository {
     }).toList();
   }
 
+  /// Charge uniquement les 4 sports pilotes de la Phase 1.
+  /// Utilise `kPilotSportIds` (source unique de vérité dans sports.dart).
   Future<List<Map<String, dynamic>>> getSports() async {
     final data = await _client
         .from('sports')
         .select('id, name_fr, slug')
-        .eq('is_active', true)
+        .inFilter('id', kPilotSportIds)
         .order('name_fr');
     return (data as List).cast<Map<String, dynamic>>();
   }

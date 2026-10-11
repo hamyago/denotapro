@@ -12,6 +12,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../main.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/constants/sports.dart';
 
 class TikTokFeedScreen extends StatefulWidget {
   final bool isActive;
@@ -71,11 +72,14 @@ class _TikTokFeedScreenState extends State<TikTokFeedScreen>
     if (_routeOnTop) setState(() => _routeOnTop = false);
   }
 
+  /// Charge uniquement les 4 sports pilotes de la Phase 1.
+  /// Utilise `kPilotSportIds` (source unique de vérité dans sports.dart).
   Future<void> _loadSports() async {
     try {
       final data = await supabase
           .from('sports')
           .select('id, name_fr')
+          .inFilter('id', kPilotSportIds)
           .order('name_fr');
       if (!mounted) return;
       setState(() {

@@ -78,6 +78,38 @@ enum SportType {
 }
 
 // ══════════════════════════════════════════════════════════════
+// LISTE CENTRALISÉE DES SPORTS PILOTES
+// ══════════════════════════════════════════════════════════════
+
+/// Les 4 sports pilotes de la phase 1.
+///
+/// **Utilisez cette liste au lieu de `SportType.values`** dans tout
+/// nouveau code pour rester aligné sur la stratégie de lancement.
+const List<SportType> kPilotSports = [
+  SportType.football,
+  SportType.basketball,
+  SportType.athletics,
+  SportType.taekwondo,
+];
+
+/// IDs des sports pilotes (pour filtrer les requêtes Supabase).
+///
+/// Correspondances :
+///   1  = Football
+///   2  = Basketball
+///   3  = Athlétisme
+///   10 = Taekwondo
+const List<int> kPilotSportIds = [1, 2, 3, 10];
+
+/// Slugs des sports pilotes (pour filtrer les requêtes Supabase par slug).
+const List<String> kPilotSportSlugs = [
+  'football',
+  'basketball',
+  'athletics',
+  'taekwondo',
+];
+
+// ══════════════════════════════════════════════════════════════
 // POSITIONS / SPÉCIALITÉS PAR SPORT
 // ══════════════════════════════════════════════════════════════
 
@@ -410,10 +442,10 @@ enum ScoutRecommendation {
 
 /// Retourne la liste des noms français des sports pilotes.
 List<String> get kSportNames =>
-    SportType.values.map((s) => s.nameFr).toList();
+    kPilotSports.map((s) => s.nameFr).toList();
 
 /// Retourne la liste des sports sous forme de Map (pour Supabase).
-List<Map<String, dynamic>> get kSportsAsMaps => SportType.values
+List<Map<String, dynamic>> get kSportsAsMaps => kPilotSports
     .map((s) => {
           'id': s.id,
           'slug': s.slug,

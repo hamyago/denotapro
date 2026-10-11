@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../main.dart';
+import 'institution_setup_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -13,12 +14,15 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey   = GlobalKey<FormState>();
-  final _nameCtrl  = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _passCtrl  = TextEditingController();
-  bool _loading = false;
-  bool _obscure = true;
+  final _formKey         = GlobalKey<FormState>();
+  final _nameCtrl        = TextEditingController();
+  final _emailCtrl       = TextEditingController();
+  final _passCtrl        = TextEditingController();
+  final _confirmPassCtrl = TextEditingController();
+
+  bool _loading        = false;
+  bool _obscure        = true;
+  bool _obscureConfirm = true;
   String? _error;
 
   Future<void> _register() async {
@@ -42,18 +46,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     } catch (e) {
       final msg = e.toString();
-      if (msg.contains('email_address_not_authorized') || msg.contains('Signups not allowed')) {
-        setState(() => _error = 'Les inscriptions par email ne sont pas activées sur Supabase. Active Email Auth dans Authentication → Providers.');
-      } else if (msg.contains('already registered') || msg.contains('already_exists')) {
-        setState(() => _error = 'Cet email est déjà utilisé. Connecte-toi plutôt.');
+      if (msg.contains('email_address_not_authorized') ||
+          msg.contains('Signups not allowed')) {
+        setState(() => _error =
+            'Les inscriptions par email ne sont pas activées sur Supabase. Active Email Auth dans Authentication → Providers.');
+      } else if (msg.contains('already registered') ||
+          msg.contains('already_exists')) {
+        setState(() => _error =
+            'Cet email est déjà utilisé. Connecte-toi plutôt.');
       } else if (msg.contains('invalid') && msg.contains('password')) {
-        setState(() => _error = 'Le mot de passe doit contenir au moins 6 caractères.');
+        setState(() => _error =
+            'Le mot de passe doit contenir au moins 8 caractères.');
       } else {
-        setState(() => _error = 'Erreur : ${msg.length > 120 ? msg.substring(0, 120) : msg}');
+        setState(() => _error =
+            'Erreur : ${msg.length > 120 ? msg.substring(0, 120) : msg}');
       }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _confirmPassCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -64,7 +83,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         leading: BackButton(onPressed: () => Navigator.of(context).pop()),
         title: RichText(
           text: const TextSpan(
-            style: TextStyle(fontFamily: 'Poppins', fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 20,
+                fontWeight: FontWeight.w700),
             children: [
               TextSpan(text: 'De', style: TextStyle(color: AppColors.ink)),
               TextSpan(text: 'No', style: TextStyle(color: AppColors.primary)),
@@ -83,18 +105,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 32),
-                const Text('Créer un compte', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.ink)),
+                const Text(
+                  'Créer un compte',
+                  style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink),
+                ),
                 const SizedBox(height: 6),
-                const Text('Rejoins la communauté DeNoTa CI', style: TextStyle(fontSize: 14, color: AppColors.grey500)),
+                const Text(
+                  'Rejoins la communauté DeNoTa CI',
+                  style: TextStyle(fontSize: 14, color: AppColors.grey500),
+                ),
                 const SizedBox(height: 32),
 
                 // Étapes
-                _StepIndicator(current: 1, total: 2),
+                const _StepIndicator(current: 1, total: 2),
                 const SizedBox(height: 24),
 
-                if (_error != null)
-                  _ErrorBanner(message: _error!),
+                if (_error != null) _ErrorBanner(message: _error!),
 
+                // ── Nom complet ─────────────────────────────
                 TextFormField(
                   controller: _nameCtrl,
                   textCapitalization: TextCapitalization.words,
@@ -102,9 +133,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: 'Nom complet',
                     prefixIcon: Icon(Icons.person_outlined),
                   ),
-                  validator: (v) => (v?.isEmpty ?? true) ? 'Nom requis' : null,
+                  validator: (v) =>
+                      (v?.isEmpty ?? true) ? 'Nom requis' : null,
                 ),
                 const SizedBox(height: 16),
+
+                // ── Email ───────────────────────────────────
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
@@ -119,6 +153,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+
+                // ── Mot de passe ────────────────────────────
                 TextFormField(
                   controller: _passCtrl,
                   obscureText: _obscure,
@@ -126,7 +162,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: 'Mot de passe',
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                      icon: Icon(_obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
@@ -136,32 +174,83 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
+                const SizedBox(height: 16),
+
+                // ── Confirmation mot de passe ───────────────
+                TextFormField(
+                  controller: _confirmPassCtrl,
+                  obscureText: _obscureConfirm,
+                  decoration: InputDecoration(
+                    labelText: 'Confirmer le mot de passe',
+                    prefixIcon: const Icon(Icons.lock_outlined),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureConfirm
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
+                      onPressed: () =>
+                          setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
+                  ),
+                  validator: (v) {
+                    if (v?.isEmpty ?? true) {
+                      return 'Confirmation requise';
+                    }
+                    if (v != _passCtrl.text) {
+                      return 'Les mots de passe ne correspondent pas';
+                    }
+                    return null;
+                  },
+                ),
                 const SizedBox(height: 12),
+
                 const Text(
                   'En créant un compte, tu acceptes nos Conditions d\'utilisation et notre Politique de confidentialité.',
-                  style: TextStyle(fontSize: 12, color: AppColors.grey400, height: 1.5),
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.grey400, height: 1.5),
                 ),
                 const SizedBox(height: 28),
+
+                // ── Bouton Continuer ────────────────────────
                 ElevatedButton(
                   onPressed: _loading ? null : _register,
                   child: _loading
-                      ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2.5),
+                        )
                       : const Text('Continuer →'),
                 ),
                 const SizedBox(height: 16),
+
+                // ── Lien connexion ──────────────────────────
                 Center(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text('Déjà un compte ? ', style: TextStyle(color: AppColors.grey500, fontSize: 14)),
+                      const Text(
+                        'Déjà un compte ? ',
+                        style: TextStyle(
+                            color: AppColors.grey500, fontSize: 14),
+                      ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(),
-                        style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                        child: const Text('Se connecter', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 14)),
+                        style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero),
+                        child: const Text(
+                          'Se connecter',
+                          style: TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14),
+                        ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -171,7 +260,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
-// ── Choix du rôle ──────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// CHOIX DU RÔLE
+// ══════════════════════════════════════════════════════════════
+
 class RegisterRoleScreen extends StatefulWidget {
   const RegisterRoleScreen({super.key});
   @override
@@ -183,22 +275,69 @@ class _RegisterRoleScreenState extends State<RegisterRoleScreen> {
   bool _loading = false;
 
   final _roles = const [
-    _RoleOption(value: 'athlete',     emoji: '🏃', label: 'Sportif',            desc: 'Je suis un athlète qui cherche à être détecté'),
-    _RoleOption(value: 'institution', emoji: '🏫', label: 'École / Club',        desc: 'Je représente un club, une école ou une académie'),
-    _RoleOption(value: 'recruiter',   emoji: '🔍', label: 'Recruteur / Agent',   desc: 'Je recherche des talents pour un club ou en tant qu\'agent'),
-    _RoleOption(value: 'sponsor',     emoji: '💰', label: 'Sponsor / Marque',    desc: 'Je cherche des sportifs ambassadeurs pour ma marque'),
+    _RoleOption(
+        value: 'athlete',
+        emoji: '🏃',
+        label: 'Sportif',
+        desc: 'Je suis un athlète qui cherche à être détecté'),
+    _RoleOption(
+        value: 'institution',
+        emoji: '🏫',
+        label: 'École / Club',
+        desc: 'Je représente un club, une école ou une académie'),
+    _RoleOption(
+        value: 'recruiter',
+        emoji: '🔍',
+        label: 'Recruteur / Agent',
+        desc: 'Je recherche des talents pour un club ou en tant qu\'agent'),
+    _RoleOption(
+        value: 'federation',
+        emoji: '🏛️',
+        label: 'Fédération',
+        desc: 'Je représente une fédération sportive nationale'),
+    _RoleOption(
+        value: 'sponsor',
+        emoji: '💰',
+        label: 'Sponsor / Marque',
+        desc: 'Je cherche des sportifs ambassadeurs pour ma marque'),
   ];
 
   Future<void> _save() async {
     if (_role == null) return;
     setState(() => _loading = true);
     try {
-      await supabase.from('profiles').update({'role': _role}).eq('id', supabase.auth.currentUser!.id);
+      // Mettre à jour le rôle du profil
+      await supabase
+          .from('profiles')
+          .update({'role': _role})
+          .eq('id', supabase.auth.currentUser!.id);
+
       if (!mounted) return;
-      AppNavigator.goToFeed();
-    } catch (_) {
+
+      // Redirection selon le rôle
+      if (_role == 'institution' ||
+          _role == 'federation' ||
+          _role == 'recruiter') {
+        // Formulaire de configuration de la structure
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => InstitutionSetupScreen(role: _role!),
+          ),
+        );
+      } else {
+        // Athlète ou sponsor → direct vers le feed
+        AppNavigator.goToFeed();
+      }
+    } catch (e) {
       if (!mounted) return;
-      AppNavigator.goToFeed();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur : $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -213,11 +352,21 @@ class _RegisterRoleScreenState extends State<RegisterRoleScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 48),
-              const Text('Tu es...', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.ink)),
+              const Text(
+                'Tu es...',
+                style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink),
+              ),
               const SizedBox(height: 8),
-              const Text('Choisis ton profil pour personnaliser ton expérience DeNoTa.', style: TextStyle(fontSize: 14, color: AppColors.grey500, height: 1.5)),
+              const Text(
+                'Choisis ton profil pour personnaliser ton expérience DeNoTa.',
+                style: TextStyle(
+                    fontSize: 14, color: AppColors.grey500, height: 1.5),
+              ),
               const SizedBox(height: 8),
-              _StepIndicator(current: 2, total: 2),
+              const _StepIndicator(current: 2, total: 2),
               const SizedBox(height: 24),
               Expanded(
                 child: ListView.separated(
@@ -232,28 +381,49 @@ class _RegisterRoleScreenState extends State<RegisterRoleScreen> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.primaryBg : AppColors.grey100,
+                          color: selected
+                              ? AppColors.primaryBg
+                              : AppColors.grey100,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: selected ? AppColors.primary : AppColors.grey200,
+                            color: selected
+                                ? AppColors.primary
+                                : AppColors.grey200,
                             width: selected ? 2 : 1,
                           ),
                         ),
                         child: Row(
                           children: [
-                            Text(r.emoji, style: const TextStyle(fontSize: 32)),
+                            Text(r.emoji,
+                                style: const TextStyle(fontSize: 32)),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(r.label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: selected ? AppColors.primary : AppColors.ink)),
+                                  Text(
+                                    r.label,
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: selected
+                                            ? AppColors.primary
+                                            : AppColors.ink),
+                                  ),
                                   const SizedBox(height: 2),
-                                  Text(r.desc, style: const TextStyle(fontSize: 13, color: AppColors.grey500, height: 1.4)),
+                                  Text(
+                                    r.desc,
+                                    style: const TextStyle(
+                                        fontSize: 13,
+                                        color: AppColors.grey500,
+                                        height: 1.4),
+                                  ),
                                 ],
                               ),
                             ),
-                            if (selected) const Icon(Icons.check_circle, color: AppColors.primary),
+                            if (selected)
+                              const Icon(Icons.check_circle,
+                                  color: AppColors.primary),
                           ],
                         ),
                       ),
@@ -265,7 +435,12 @@ class _RegisterRoleScreenState extends State<RegisterRoleScreen> {
               ElevatedButton(
                 onPressed: (_role == null || _loading) ? null : _save,
                 child: _loading
-                    ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2.5),
+                      )
                     : const Text('Commencer avec DeNoTa'),
               ),
               const SizedBox(height: 24),
@@ -277,7 +452,10 @@ class _RegisterRoleScreenState extends State<RegisterRoleScreen> {
   }
 }
 
-// ── OTP Screen ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// OTP SCREEN
+// ══════════════════════════════════════════════════════════════
+
 class OtpScreen extends StatefulWidget {
   final String phone;
   const OtpScreen({super.key, required this.phone});
@@ -306,7 +484,9 @@ class _OtpScreenState extends State<OtpScreen> {
     } catch (_) {
       setState(() => _loading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Code incorrect. Réessaie.'), backgroundColor: AppColors.error),
+        const SnackBar(
+            content: Text('Code incorrect. Réessaie.'),
+            backgroundColor: AppColors.error),
       );
     }
   }
@@ -322,42 +502,68 @@ class _OtpScreenState extends State<OtpScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 24),
-            const Text('Code de vérification', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.ink)),
+            const Text(
+              'Code de vérification',
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink),
+            ),
             const SizedBox(height: 8),
-            Text('Entrez le code envoyé au ${widget.phone}', style: const TextStyle(fontSize: 14, color: AppColors.grey500)),
+            Text('Entrez le code envoyé au ${widget.phone}',
+                style: const TextStyle(
+                    fontSize: 14, color: AppColors.grey500)),
             const SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(6, (i) => SizedBox(
-                width: 46,
-                height: 56,
-                child: TextFormField(
-                  controller: _controllers[i],
-                  focusNode: _focusNodes[i],
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  maxLength: 1,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                  decoration: InputDecoration(
-                    counterText: '',
-                    filled: true,
-                    fillColor: AppColors.grey100,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.primary, width: 2)),
+              children: List.generate(
+                6,
+                (i) => SizedBox(
+                  width: 46,
+                  height: 56,
+                  child: TextFormField(
+                    controller: _controllers[i],
+                    focusNode: _focusNodes[i],
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    maxLength: 1,
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.w700),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      filled: true,
+                      fillColor: AppColors.grey100,
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(
+                              color: AppColors.primary, width: 2)),
+                    ),
+                    onChanged: (v) {
+                      if (v.isNotEmpty && i < 5) {
+                        _focusNodes[i + 1].requestFocus();
+                      }
+                      if (v.isEmpty && i > 0) {
+                        _focusNodes[i - 1].requestFocus();
+                      }
+                      if (_otp.length == 6) _verify();
+                    },
                   ),
-                  onChanged: (v) {
-                    if (v.isNotEmpty && i < 5) _focusNodes[i+1].requestFocus();
-                    if (v.isEmpty && i > 0) _focusNodes[i-1].requestFocus();
-                    if (_otp.length == 6) _verify();
-                  },
                 ),
-              )),
+              ),
             ),
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: _loading ? null : _verify,
               child: _loading
-                  ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2.5),
+                    )
                   : const Text('Vérifier'),
             ),
           ],
@@ -367,23 +573,29 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 }
 
-// ── Widgets communs ────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════
+// WIDGETS COMMUNS
+// ══════════════════════════════════════════════════════════════
+
 class _StepIndicator extends StatelessWidget {
   final int current, total;
   const _StepIndicator({required this.current, required this.total});
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: List.generate(total, (i) => Expanded(
-        child: Container(
-          height: 4,
-          margin: EdgeInsets.only(right: i < total-1 ? 6 : 0),
-          decoration: BoxDecoration(
-            color: i < current ? AppColors.primary : AppColors.grey200,
-            borderRadius: BorderRadius.circular(2),
+      children: List.generate(
+        total,
+        (i) => Expanded(
+          child: Container(
+            height: 4,
+            margin: EdgeInsets.only(right: i < total - 1 ? 6 : 0),
+            decoration: BoxDecoration(
+              color: i < current ? AppColors.primary : AppColors.grey200,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
         ),
-      )),
+      ),
     );
   }
 }
@@ -405,7 +617,10 @@ class _ErrorBanner extends StatelessWidget {
         children: [
           const Icon(Icons.error_outline, color: AppColors.error, size: 18),
           const SizedBox(width: 8),
-          Expanded(child: Text(message, style: const TextStyle(color: AppColors.error, fontSize: 13))),
+          Expanded(
+              child: Text(message,
+                  style: const TextStyle(
+                      color: AppColors.error, fontSize: 13))),
         ],
       ),
     );
@@ -414,5 +629,10 @@ class _ErrorBanner extends StatelessWidget {
 
 class _RoleOption {
   final String value, emoji, label, desc;
-  const _RoleOption({required this.value, required this.emoji, required this.label, required this.desc});
+  const _RoleOption({
+    required this.value,
+    required this.emoji,
+    required this.label,
+    required this.desc,
+  });
 }
