@@ -44,3 +44,16 @@ docs/output/*.docx
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# ── APK & Builds ─────────────────────────────
+APK/
+*.apk
+*.aab
+
+# ── Screenshots & WhatsApp ────────────────────
+WhatsApp*
+*.zip
+
+# ── Docs à ne pas versionner ──────────────────
+docs/*.docx
+docs/envoie/*.pdf
