@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       try {
                         await supabase.auth.resetPasswordForEmail(
                           emailCtrl.text.trim(),
-                          redirectTo: 'denota://reset-password',
+                          redirectTo: 'https://www.oyop-mt.com/denota/reset-password.html',
                         );
 
                         if (!dialogCtx.mounted) return;
