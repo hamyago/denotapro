@@ -172,22 +172,46 @@ class _InstitutionSetupScreenState extends State<InstitutionSetupScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                DropdownButtonFormField<InstitutionType>(
-                  initialValue: _type,
-                  decoration: const InputDecoration(
-                    labelText: 'Type de structure *',
-                    prefixIcon: Icon(Icons.category_outlined),
-                  ),
-                  items: InstitutionType.values.map((t) {
-                    return DropdownMenuItem(
-                      value: t,
-                      child: Text('${t.emoji} ${t.labelFr}'),
-                    );
-                  }).toList(),
-                  onChanged: (v) {
-                    if (v != null) setState(() => _type = v);
-                  },
-                ),
+                // Type de structure : affiché en lecture seule
+// (défini par le rôle choisi à l'inscription)
+Container(
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+  decoration: BoxDecoration(
+    color: AppColors.grey100,
+    borderRadius: BorderRadius.circular(12),
+    border: Border.all(color: AppColors.grey200),
+  ),
+  child: Row(
+    children: [
+      const Icon(Icons.category_outlined, color: AppColors.grey500, size: 20),
+      const SizedBox(width: 12),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Type de structure',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.grey500,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${_type.emoji} ${_type.labelFr}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const Icon(Icons.lock_outline, color: AppColors.grey400, size: 18),
+    ],
+  ),
+),
                 const SizedBox(height: 12),
 
                 TextFormField(
